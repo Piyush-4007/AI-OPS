@@ -29,8 +29,46 @@ AWS EC2 instance, scored by an Isolation Forest model, and streamed to a React d
 
 ## Screenshots
 
-<!-- Add screenshots to the screenshots/ folder and reference them here, e.g.: -->
-<!-- ![Overview](screenshots/overview.png) -->
+### Live overview
+
+Health score, key metrics and infrastructure stats, polled from the EC2 host.
+
+![Overview](screenshots/01-overview.png)
+
+![Time series](screenshots/02-time-series.png)
+
+### Detection pipeline, end to end
+
+A stress test is triggered from the dashboard, and the system detects and reports it
+without any manual intervention.
+
+**1. Trigger a fault.** Remote actions run real workloads on the monitored host.
+
+![Actions](screenshots/08-actions.png)
+
+**2. The load is real.** `stress --cpu 4` workers appear in the live process table.
+
+![Processes](screenshots/05-processes.png)
+
+**3. Metrics respond.** CPU climbs to 100% in the time-series view.
+
+![CPU](screenshots/03-cpu.png)
+
+**4. The model flags it.** Isolation Forest scores the sample as anomalous and returns a
+recommendation alongside the input features.
+
+![Anomaly detection](screenshots/06-anomaly-detection.png)
+
+**5. An alert is emailed.** Threshold breaches dispatch an HTML alert via Gmail SMTP,
+with a five-minute per-metric cooldown.
+
+![Email alert](screenshots/09-email-alert.png)
+
+### Other views
+
+![Disk](screenshots/04-disk.png)
+
+![AI chat](screenshots/07-ai-chat.png)
 
 ## Architecture
 
