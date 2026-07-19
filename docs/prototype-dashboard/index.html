@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIOps Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { display: flex; font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e0e0e0; height: 100vh; overflow: hidden; }
+
+    /* Sidebar */
+    .sidebar { width: 220px; background: #1a1d27; padding: 24px 16px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+    .sidebar h2 { font-size: 18px; color: #7c83fd; margin-bottom: 16px; }
+    .sidebar a { padding: 10px 14px; border-radius: 8px; color: #aaa; text-decoration: none; font-size: 14px; transition: all 0.2s; }
+    .sidebar a:hover, .sidebar a.active { background: #2a2d3e; color: #fff; }
+
+    /* Main */
+    .main { flex: 1; padding: 24px; overflow-y: auto; }
+    .main h1 { font-size: 22px; margin-bottom: 6px; }
+    .subtitle { font-size: 13px; color: #666; margin-bottom: 24px; }
+
+    /* Cards */
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .card { background: #1a1d27; border-radius: 12px; padding: 18px; }
+    .card .label { font-size: 12px; color: #888; margin-bottom: 8px; }
+    .card .value { font-size: 28px; font-weight: 700; }
+    .card .sub { font-size: 11px; color: #555; margin-top: 4px; }
+    .card.green .value { color: #4ade80; }
+    .card.blue .value { color: #60a5fa; }
+    .card.yellow .value { color: #facc15; }
+    .card.red .value { color: #f87171; }
+    .card.purple .value { color: #c084fc; }
+
+    /* Charts */
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .chart-box { background: #1a1d27; border-radius: 12px; padding: 18px; }
+    .chart-box h3 { font-size: 14px; color: #aaa; margin-bottom: 14px; }
+
+    /* Table */
+    .table-box { background: #1a1d27; border-radius: 12px; padding: 18px; }
+    .table-box h3 { font-size: 14px; color: #aaa; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; color: #555; padding: 8px; border-bottom: 1px solid #2a2d3e; }
+    td { padding: 8px; border-bottom: 1px solid #1e2130; }
+
+    /* Status dot */
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>⚡ AIOps</h2>
+  <a href="#" class="active">📊 Overview</a>
+  <a href="#">🖥️ CPU</a>
+  <a href="#">💾 Memory</a>
+  <a href="#">🌐 Network</a>
+  <a href="#">💿 Disk</a>
+  <a href="#">🔔 Alerts</a>
+</div>
+
+<div class="main">
+  <h1><span class="dot"></span>System Dashboard</h1>
+  <p class="subtitle" id="lastUpdate">Fetching data...</p>
+
+  <div class="cards">
+    <div class="card green">
+      <div class="label">CPU Usage</div>
+      <div class="value" id="cpu">--</div>
+      <div class="sub">5 min average</div>
+    </div>
+    <div class="card blue">
+      <div class="label">RAM Usage</div>
+      <div class="value" id="ram">--</div>
+      <div class="sub">of total memory</div>
+    </div>
+    <div class="card yellow">
+      <div class="label">Disk Usage</div>
+      <div class="value" id="disk">--</div>
+      <div class="sub">root filesystem</div>
+    </div>
+    <div class="card purple">
+      <div class="label">Load Average</div>
+      <div class="value" id="load">--</div>
+      <div class="sub">1 min load avg</div>
+    </div>
+    <div class="card blue">
+      <div class="label">Network In</div>
+      <div class="value" id="netin">--</div>
+      <div class="sub">bytes/sec</div>
+    </div>
+    <div class="card green">
+      <div class="label">Network Out</div>
+      <div class="value" id="netout">--</div>
+      <div class="sub">bytes/sec</div>
+    </div>
+    <div class="card green">
+      <div class="label">Uptime</div>
+      <div class="value" id="uptime">--</div>
+      <div class="sub">hours running</div>
+    </div>
+    <div class="card red">
+      <div class="label">Status</div>
+      <div class="value" style="font-size:16px;margin-top:4px;" id="status">--</div>
+      <div class="sub">system health</div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-box">
+      <h3>CPU Usage Over Time</h3>
+      <canvas id="cpuChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>RAM Usage Over Time</h3>
+      <canvas id="ramChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Network In (bytes/s)</h3>
+      <canvas id="netChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Live Metrics (last 10 readings)</h3>
+      <canvas id="liveChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = 'http://18.209.50.96:5000';
+
+  // Chart setup
+  const chartConfig = (label, color) => ({
+    type: 'line',
+    data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: color + '22', borderWidth: 2, pointRadius: 0, tension: 0.4, fill: true }] },
+    options: { responsive: true, animation: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#555', maxTicksLimit: 6 }, grid: { color: '#1e2130' } }, y: { ticks: { color: '#555' }, grid: { color: '#1e2130' } } } }
+  });
+
+  const cpuChart = new Chart(document.getElementById('cpuChart'), chartConfig('CPU %', '#7c83fd'));
+  const ramChart = new Chart(document.getElementById('ramChart'), chartConfig('RAM %', '#60a5fa'));
+  const netChart = new Chart(document.getElementById('netChart'), chartConfig('Net In', '#4ade80'));
+
+  // Live mini chart
+  const liveChart = new Chart(document.getElementById('liveChart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'CPU', data: [], backgroundColor: '#7c83fd99' },
+      { label: 'RAM', data: [], backgroundColor: '#60a5fa99' }
+    ]},
+    options: { responsive: true, animation: false, scales: { x: { ticks: { color: '#555' }, grid: { color: '#1e2130' } }, y: { ticks: { color: '#555' }, grid: { color: '#1e2130' }, max: 100 } }, plugins: { legend: { labels: { color: '#aaa' } } } }
+  });
+
+  let liveLabels = [], liveCpu = [], liveRam = [];
+
+  function formatBytes(b) {
+    if (b > 1048576) return (b/1048576).toFixed(1) + ' MB/s';
+    if (b > 1024) return (b/1024).toFixed(1) + ' KB/s';
+    return b.toFixed(0) + ' B/s';
+  }
+
+  async function fetchLive() {
+    try {
+      const res = await fetch(`${API}/api/metrics/live`);
+      const d = await res.json();
+      document.getElementById('cpu').textContent = d.cpu_percent + '%';
+      document.getElementById('ram').textContent = d.ram_percent + '%';
+      document.getElementById('disk').textContent = d.disk_percent + '%';
+      document.getElementById('load').textContent = d.load_avg;
+      document.getElementById('netin').textContent = formatBytes(d.network_in_bytes);
+      document.getElementById('netout').textContent = formatBytes(d.network_out_bytes);
+      document.getElementById('uptime').textContent = (d.uptime_seconds / 3600).toFixed(1) + 'h';
+      document.getElementById('status').textContent = '🟢 Healthy';
+      document.getElementById('lastUpdate').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+
+      // Live bar chart
+      const t = new Date().toLocaleTimeString();
+      liveLabels.push(t); liveCpu.push(d.cpu_percent); liveRam.push(d.ram_percent);
+      if (liveLabels.length > 10) { liveLabels.shift(); liveCpu.shift(); liveRam.shift(); }
+      liveChart.data.labels = liveLabels;
+      liveChart.data.datasets[0].data = liveCpu;
+      liveChart.data.datasets[1].data = liveRam;
+      liveChart.update();
+    } catch(e) {
+      document.getElementById('status').textContent = '🔴 Offline';
+    }
+  }
+
+  async function fetchHistory() {
+    try {
+      const res = await fetch(`${API}/api/metrics/history`);
+      const d = await res.json();
+
+      const fmt = ts => new Date(ts*1000).toLocaleTimeString();
+
+      cpuChart.data.labels = d.cpu.map(v => fmt(v.time));
+      cpuChart.data.datasets[0].data = d.cpu.map(v => v.value);
+      cpuChart.update();
+
+      ramChart.data.labels = d.ram.map(v => fmt(v.time));
+      ramChart.data.datasets[0].data = d.ram.map(v => v.value);
+      ramChart.update();
+
+      netChart.data.labels = d.network_in.map(v => fmt(v.time));
+      netChart.data.datasets[0].data = d.network_in.map(v => v.value);
+      netChart.update();
+    } catch(e) { console.log('History error', e); }
+  }
+
+  fetchLive();
+  fetchHistory();
+  setInterval(fetchLive, 15000);
+  setInterval(fetchHistory, 60000);
+</script>
+</body>
+</html>
