@@ -275,8 +275,6 @@ def action_slow_response():
         except: pass
     return jsonify({"status": "slow responses triggered"})
 
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
 @app.route('/api/action/full-stress')
 def action_full_stress():
     import threading
@@ -319,4 +317,6 @@ def action_full_stress_stop():
     return jsonify({"status": "all stress stopped, memory freed"})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # debug=True exposes the Werkzeug interactive debugger, which allows arbitrary
+    # code execution. This service listens on a public IP, so it must stay off.
+    app.run(host='0.0.0.0', port=5000, debug=False)

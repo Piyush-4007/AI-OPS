@@ -80,6 +80,9 @@ target workload for stress tests.
 
 ## Setup
 
+> For the full cold-start routine — starting the EC2 instance, updating the IP, verifying
+> the service and troubleshooting alerts — see **[docs/STARTUP.md](docs/STARTUP.md)**.
+
 ### Backend (on the EC2 host)
 
 ```bash
@@ -136,6 +139,6 @@ Secrets are excluded from this repository via `.gitignore` — `.env`, `*.pem` a
 ```
 aiops-backend/     Flask API, ML model, training and evaluation scripts
 aiops-dashboard/   React + Vite frontend
-docs/              Architecture diagram, project report, reference guides
+docs/              Startup guide, architecture diagram, project report
 screenshots/       Dashboard screenshots
 ```

@@ -683,7 +683,7 @@ export default function App() {
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
           <div style={{ padding: '14px 26px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${C.border}`, background: 'rgba(10,10,18,0.6)', backdropFilter: 'blur(12px)' }}>
-            <div><h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{NAV_SECTIONS.flatMap(s => s.items).find(n => n.id === page)?.label}</h1><div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>aiops-server · <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>{live?.ip || '18.206.169.98'}</span> · Ubuntu 24.04</div></div>
+            <div><h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>{NAV_SECTIONS.flatMap(s => s.items).find(n => n.id === page)?.label}</h1><div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>aiops-server · <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>{live?.ip || API.replace(/^https?:\/\//, '').replace(/:\d+$/, '')}</span> · Ubuntu 24.04</div></div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <ExportButton live={live} extended={extended} anomaly={anomaly} alerts={alerts} />
               <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '7px 14px', fontSize: 11, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 5 }}><Clock size={12} color={C.textFaint} /> {lastUpdate || '...'}</div>

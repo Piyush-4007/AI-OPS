@@ -3,6 +3,12 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email_config import EMAIL_SENDER, EMAIL_RECEIVER, EMAIL_PASSWORD
 import time
+import logging
+
+# print() is block-buffered when stdout is not a TTY, so under systemd its output
+# never reaches journalctl and alert delivery becomes invisible. Log instead.
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s [%(name)s] %(message)s')
+log = logging.getLogger('alert_mailer')
 
 # Per-metric cooldowns (seconds)
 COOLDOWNS = {
@@ -22,7 +28,7 @@ def send_alert_email(metric, value, severity, recommendation):
     cooldown = COOLDOWNS.get(metric, DEFAULT_COOLDOWN)
     last = last_alert_times.get(metric, 0)
     if now - last < cooldown:
-        print(f"Cooldown active for {metric} — skipping email")
+        log.info("Cooldown active for %s (%.0fs remaining) — skipping email", metric, cooldown - (now - last))
         return
     last_alert_times[metric] = now
 
@@ -116,6 +122,6 @@ def send_alert_email(metric, value, severity, recommendation):
         server.login(EMAIL_SENDER, EMAIL_PASSWORD)
         server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
         server.quit()
-        print(f"HTML alert email sent for {metric} at {value}%")
+        log.info("Alert email sent — %s at %s%% (%s) to %s", metric, value, severity, EMAIL_RECEIVER)
     except Exception as e:
-        print(f"Email failed: {e}")
+        log.error("Alert email FAILED for %s at %s%%: %s: %s", metric, value, type(e).__name__, e, exc_info=True)
